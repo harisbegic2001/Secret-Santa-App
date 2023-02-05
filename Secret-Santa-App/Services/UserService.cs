@@ -24,6 +24,12 @@ public class UserService : IUserService
     
     public async Task<User> UserRegisterAsync(CreateUserDto createUserDto)
     {
+
+        if (string.IsNullOrWhiteSpace(createUserDto.Email) || string.IsNullOrWhiteSpace(createUserDto.FirstName) || string.IsNullOrWhiteSpace(createUserDto.LastName))
+        {
+            throw new InvalidInputDataException();
+        }
+        
         using var hmac = new HMACSHA512();
         var newUser = new User
         {
@@ -100,7 +106,7 @@ public class UserService : IUserService
 
         return new ReadUserPairsDto
         {
-            FullName = existingUser.FirstName,
+            FullName = $"{existingUser.FirstName} {existingUser.LastName}",
             RecepientFullName = existingUser.RecepientFullName
         };
 
@@ -112,8 +118,13 @@ public class UserService : IUserService
         var userIds = await _context.Users!.AsNoTracking().Select(x => x.Id).ToListAsync();
         var listOfUsers = await _context.Users!.ToListAsync();
 
+        if (userIds.Count < 4)
+        {
+            throw new InsufficientNumberOfUsersException("Number of users must be at least 4!");
+        }
         
-        // Ovo možda uraditi u donjoj petlji!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        
+        // Ovo možda uraditi u donjoj petlji!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! - Na početku petlje mislim
         foreach (var user in listOfUsers)
         {
             user.GiftRecepientId = 0;
@@ -121,9 +132,11 @@ public class UserService : IUserService
 
         }
         
+        //Ovo prebaciti sve u donji if i izbrisati numberOfUsers varijablu i u if uslov staviti userIds.Count
         var randomIndexToDelete = random.Next(userIds.Count);
         var usertoDelete = await _context.Users!.Where(x => x.Id == userIds[randomIndexToDelete]).FirstOrDefaultAsync();
         var numberOfUsers = userIds.Count;
+        //Ovaj blok 
         if (numberOfUsers % 2 != 0)
         {
             

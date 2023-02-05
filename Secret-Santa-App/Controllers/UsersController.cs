@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Secret_Santa_App.DTOs.Reponses;
 using Secret_Santa_App.DTOs.Requests;
+using Secret_Santa_App.Exceptions;
 using Secret_Santa_App.Models;
 using Secret_Santa_App.Services.Interfaces;
 
@@ -24,9 +25,16 @@ public class UsersController : ControllerBase
     [HttpPost("register")]
     public async Task<ActionResult<User>> RegisterUser(CreateUserDto createUserDto)
     {
-        var newUser = await _userService.UserRegisterAsync(createUserDto);
+        try
+        {
+            var newUser = await _userService.UserRegisterAsync(createUserDto);
 
-        return Ok(newUser);
+            return Ok(newUser);
+        }
+        catch (InvalidInputDataException)
+        {
+            return BadRequest("Invalid Input");
+        }
     }
 
 
@@ -34,12 +42,21 @@ public class UsersController : ControllerBase
     [HttpPost("login")]
     public async Task<ActionResult<ReadUserDto>> LoginUser(LoginUserDto loginUserDto)
     {
-        var loggedInUser = await _userService.UserLoginAsync(loginUserDto);
+        try
+        {
+            var loggedInUser = await _userService.UserLoginAsync(loginUserDto);
 
-        return Ok(loggedInUser);
+            return Ok(loggedInUser);
+
+        }
+        catch (InvalidCredentialsException e)
+        {
+            return NotFound(e.Message);
+        }
+        
     }
 
-   // [Authorize(Roles = nameof(Role.Admin))]
+    [Authorize(Roles = nameof(Role.Admin))]
     [HttpGet]
     public async Task<ActionResult<IEnumerable<ReadUserPairsDto>>> GetAllPairs()
     {
@@ -52,17 +69,41 @@ public class UsersController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<ReadUserPairsDto>> GetUserPair(int id)
     {
-        var userPair = await _userService.GetUserRecepientAsync(id, User.FindFirst(ClaimTypes.NameIdentifier)?.Value!);
+        try
+        {
+            var userPair =
+                await _userService.GetUserRecepientAsync(id, User.FindFirst(ClaimTypes.NameIdentifier)?.Value!);
+
+            return Ok(userPair);
+        }
+        catch (UserNotFoundException)
+        {
+            return NotFound();
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Unauthorized();
+        }
         
-        return Ok(userPair);
+
     }
 
     [Authorize(Roles = nameof(Role.Admin))]
     [HttpGet("GeneratePairs")]
     public async Task<ActionResult> GeneratePairs()
     {
-        await _userService.GenerateUserPairsAsync();
+        try
+        {
+            await _userService.GenerateUserPairsAsync();
 
-        return Ok();
+            return Ok();
+
+        }
+        catch (InsufficientNumberOfUsersException)
+        {
+            return BadRequest();
+        }
+        
+        
     }
 }
