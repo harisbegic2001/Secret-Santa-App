@@ -125,18 +125,19 @@ public class UserService : IUserService
         
         
         // Ovo možda uraditi u donjoj petlji!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! - Na početku petlje mislim
-        foreach (var user in listOfUsers)
+      /* foreach (var user in listOfUsers)
         {
             user.GiftRecepientId = 0;
             user.RecepientFullName = null;
 
-        }
+        }*/
         
         //Ovo prebaciti sve u donji if i izbrisati numberOfUsers varijablu i u if uslov staviti userIds.Count
         var randomIndexToDelete = random.Next(userIds.Count);
         var usertoDelete = await _context.Users!.Where(x => x.Id == userIds[randomIndexToDelete]).FirstOrDefaultAsync();
         var numberOfUsers = userIds.Count;
-        //Ovaj blok 
+        //Ovaj blok  
+        
         if (numberOfUsers % 2 != 0)
         {
             
@@ -147,6 +148,9 @@ public class UserService : IUserService
 
         foreach (var user in listOfUsers)
         {
+            user.GiftRecepientId = 0;
+            user.RecepientFullName = null;
+            
             var randomIndex = random.Next(userIds.Count);
             var randomId = userIds[randomIndex];
             var getUserWithRandomIndex = await _context.Users.Where(x => x.Id == randomId).FirstOrDefaultAsync();
