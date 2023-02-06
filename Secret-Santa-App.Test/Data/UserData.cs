@@ -6,17 +6,21 @@ using Secret_Santa_App.Models;
 
 namespace Secret_Santa_App.Test.Data;
 
+/// <summary>
+/// The User data.
+/// </summary>
 public static class UserData
 {
-
+    /// <summary>
+    /// Creates the list of Users.
+    /// </summary>
+    /// <returns>The list of users.</returns>
     public static List<User> Users()
     {
         using var hmac = new HMACSHA512();
 
         return new List<User>()
         {
-
-
             new User
             {
                 Id = 1,
@@ -37,12 +41,12 @@ public static class UserData
                 LastName = "LastName2",
                 Email = "Email2",
                 UserRole = Role.User,
-                PasswordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes("firstname2lastname2")), 
+                PasswordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes("firstname2lastname2")),
                 PasswordSalt = hmac.Key,
                 GiftRecepientId = 0,
                 RecepientFullName = "RecepientFullName2"
             },
-            
+
             new User
             {
                 Id = 3,
@@ -55,7 +59,7 @@ public static class UserData
                 GiftRecepientId = 0,
                 RecepientFullName = "RecepientFullName3"
             },
-            
+
             new User
             {
                 Id = 4,
@@ -68,13 +72,14 @@ public static class UserData
                 GiftRecepientId = 0,
                 RecepientFullName = "RecepientFullName4"
             },
-            
-            
         };
     }
 
 
-
+    /// <summary>
+    /// Creates the request body for creating a user;
+    /// </summary>
+    /// <returns>The create user request body.</returns>
     public static CreateUserDto AddUser()
     {
         return new CreateUserDto
@@ -85,5 +90,17 @@ public static class UserData
         };
     }
 
-
+    /// <summary>
+    /// Creates the request body for creating a user;
+    /// </summary>
+    /// <returns>The create user request body that is invalid.</returns>
+    public static CreateUserDto AddUserWithInvalidData()
+    {
+        return new CreateUserDto
+        {
+            FirstName = " ",
+            LastName = " ",
+            Email = " "
+        };
+    }
 }

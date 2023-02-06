@@ -21,7 +21,8 @@ public class UserService : IUserService
         _tokenService = tokenService;
         _context = context;
     }
-    
+
+    /// <inheritdoc />
     public async Task<User> UserRegisterAsync(CreateUserDto createUserDto)
     {
 
@@ -50,6 +51,7 @@ public class UserService : IUserService
         return newUser;
     }
 
+    /// <inheritdoc />
     public async Task<ReadUserDto> UserLoginAsync(LoginUserDto loginUserDto)
     {
         var existingUser = await _context.Users!.Where(x => x.Email == loginUserDto.Email).FirstOrDefaultAsync();
@@ -79,17 +81,19 @@ public class UserService : IUserService
         };
     }
 
+    /// <inheritdoc />
     public async Task<IEnumerable<ReadUserPairsDto>> GetAllUserPairsAsync()
     {
         var listOfPairs = await _context.Users!.AsNoTracking().Select(x => new ReadUserPairsDto
         {
             FullName = $"{x.FirstName} {x.LastName}",
-            RecepientFullName = x.RecepientFullName == null ? "Doesn't have recepient" : x.RecepientFullName
+            RecepientFullName = x.RecepientFullName == $"{x.FirstName} {x.LastName}" ? "Doesn't have recepient" : x.RecepientFullName
         }).ToListAsync();
 
         return listOfPairs;
     }
 
+    /// <inheritdoc />
     public async Task<ReadUserPairsDto> GetUserRecepientAsync(int id, string callerId)
     {
         var existingUser = await _context.Users!.Where(x => x.Id == id).FirstOrDefaultAsync();
@@ -112,59 +116,61 @@ public class UserService : IUserService
 
     }
 
+    /// <inheritdoc />
     public async Task GenerateUserPairsAsync()
     {
         var random = new Random();
         var userIds = await _context.Users!.AsNoTracking().Select(x => x.Id).ToListAsync();
         var listOfUsers = await _context.Users!.ToListAsync();
 
-        if (userIds.Count < 4)
+        
+        if (userIds.Count < 3)
         {
-            throw new InsufficientNumberOfUsersException("Number of users must be at least 4!");
+            throw new InsufficientNumberOfUsersException("Number of users must be at least 3!");
         }
         
         
-        // Ovo možda uraditi u donjoj petlji!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! - Na početku petlje mislim
-      /* foreach (var user in listOfUsers)
-        {
-            user.GiftRecepientId = 0;
-            user.RecepientFullName = null;
-
-        }*/
-        
-        //Ovo prebaciti sve u donji if i izbrisati numberOfUsers varijablu i u if uslov staviti userIds.Count
-        var randomIndexToDelete = random.Next(userIds.Count);
-        var usertoDelete = await _context.Users!.Where(x => x.Id == userIds[randomIndexToDelete]).FirstOrDefaultAsync();
-        var numberOfUsers = userIds.Count;
-        //Ovaj blok  
-        
-        if (numberOfUsers % 2 != 0)
-        {
-            
-            userIds.Remove(userIds[randomIndexToDelete]);
-            listOfUsers.Remove(usertoDelete!);
-
-        }
-
         foreach (var user in listOfUsers)
         {
             user.GiftRecepientId = 0;
             user.RecepientFullName = null;
-            
+
+        }
+        
+        foreach (var user in listOfUsers)
+        {
+
             var randomIndex = random.Next(userIds.Count);
             var randomId = userIds[randomIndex];
-            var getUserWithRandomIndex = await _context.Users.Where(x => x.Id == randomId).FirstOrDefaultAsync();
+            var getUserWithRandomIndex =  _context.Users.Where(x => x.Id == randomId).FirstOrDefault();
 
             
             while (randomId == user.Id || getUserWithRandomIndex?.GiftRecepientId == user.Id )
             {
                 randomIndex = random.Next(userIds.Count);
                 randomId = userIds[randomIndex];
-                getUserWithRandomIndex = await _context.Users.Where(x => x.Id == randomId).FirstOrDefaultAsync();
-            }
-            user.GiftRecepientId = randomId;
-            user.RecepientFullName = $"{getUserWithRandomIndex?.FirstName} {getUserWithRandomIndex?.LastName}";
+                getUserWithRandomIndex =  _context.Users.Where(x => x.Id == randomId).FirstOrDefault();
+                
 
+                
+                if (userIds.Count == 1 && (user.Id == userIds[0] || getUserWithRandomIndex!.GiftRecepientId == user.Id))
+                {
+                    //može bez ova dva jer je već na ovo postavljen
+                    user.GiftRecepientId = 0;
+                    user.RecepientFullName = null;
+                    break;
+                }
+            }
+
+
+            if (userIds[0] != user.Id || getUserWithRandomIndex.GiftRecepientId != user.Id)
+            {
+                user.GiftRecepientId = randomId;
+                user.RecepientFullName = $"{getUserWithRandomIndex?.FirstName} {getUserWithRandomIndex?.LastName}";
+            }
+
+            
+            
             userIds.Remove(randomId);
 
         }
