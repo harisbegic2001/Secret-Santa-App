@@ -90,7 +90,8 @@ public class UserService : IUserService
         var listOfPairs = await _context.Users!.AsNoTracking().Select(x => new ReadUserPairsDto
         {
             FullName = $"{x.FirstName} {x.LastName}",
-            RecepientFullName = x.RecepientFullName == $"{x.FirstName} {x.LastName}" || x.RecepientFullName == null ? "Doesn't have recepient" : x.RecepientFullName
+            RecepientFullName = x.RecepientFullName == null ? "Doesn't have recepient" : x.RecepientFullName
+            /*RecepientFullName = x.RecepientFullName == $"{x.FirstName} {x.LastName}" || x.RecepientFullName == null ? "Doesn't have recepient" : x.RecepientFullName*/
         }).ToListAsync();
 
         return listOfPairs;
@@ -165,7 +166,7 @@ public class UserService : IUserService
             }
 
 
-            if (user.Id == listOfUsers[^1].Id && getUserWithRandomIndex.GiftRecepientId == user.Id)
+           /* if (user.Id == listOfUsers[^1].Id && getUserWithRandomIndex.GiftRecepientId == user.Id)
             {
                 continue;
             }
@@ -174,9 +175,14 @@ public class UserService : IUserService
             {
                 user.GiftRecepientId = randomId;
                 user.RecepientFullName = $"{getUserWithRandomIndex?.FirstName} {getUserWithRandomIndex?.LastName}";
-            }
-
+            }*/
             
+           if ((user.Id == listOfUsers[^1].Id && getUserWithRandomIndex.GiftRecepientId == user.Id) || (user.Id == listOfUsers[^1].Id && user.Id == userIds[0]))
+           {
+               continue;
+           }
+           user.GiftRecepientId = randomId;
+           user.RecepientFullName = $"{getUserWithRandomIndex?.FirstName} {getUserWithRandomIndex?.LastName}";
             
             userIds.Remove(randomId);
 
