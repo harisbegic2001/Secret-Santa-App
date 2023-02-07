@@ -47,6 +47,10 @@ public class UsersController : ControllerBase
         {
             return BadRequest("Invalid Input");
         }
+        catch (UserAlreadyExistsException)
+        {
+            return BadRequest("User already exists!");
+        }
     }
 
     /// <summary>

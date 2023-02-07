@@ -5,6 +5,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Secret_Santa_App.Data;
 using Secret_Santa_App.EnvironmentSettings;
+using Secret_Santa_App.GlobalErrorHandling;
 using Secret_Santa_App.Services;
 using Secret_Santa_App.Services.Interfaces;
 using Swashbuckle.AspNetCore.Filters;
@@ -70,6 +71,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+//Custom exception Middleware (GLOBAL ERROR HANDLING)
+app.ConfigureExceptionMiddleware();
 app.UseHttpsRedirection();
 app.UseCors(x => x.AllowAnyHeader().AllowAnyMethod().WithOrigins("https://localhost:4200"));
 app.UseAuthentication(); 

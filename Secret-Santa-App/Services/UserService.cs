@@ -30,8 +30,13 @@ public class UserService : IUserService
         {
             throw new InvalidInputDataException();
         }
-        
+
+        if (await _context.Users!.AnyAsync(x => x.Email == createUserDto.Email))
+        {
+            throw new UserAlreadyExistsException("User with that email already exists!");
+        }
         using var hmac = new HMACSHA512();
+
         var newUser = new User
         {
 
@@ -39,15 +44,13 @@ public class UserService : IUserService
             LastName = createUserDto.LastName,
             Email = createUserDto.Email,
             UserRole = Role.User,
-            PasswordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(createUserDto.FirstName!.ToLower()+createUserDto.LastName!.ToLower())),
-            PasswordSalt = hmac.Key,
+          PasswordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(createUserDto.FirstName!.ToLower()+createUserDto.LastName!.ToLower())),
+          PasswordSalt = hmac.Key,
             GiftRecepientId = 0,
             RecepientFullName = null
         };
-
         await _context.Users!.AddAsync(newUser);
         await _context.SaveChangesAsync();
-
         return newUser;
     }
 
@@ -87,7 +90,7 @@ public class UserService : IUserService
         var listOfPairs = await _context.Users!.AsNoTracking().Select(x => new ReadUserPairsDto
         {
             FullName = $"{x.FirstName} {x.LastName}",
-            RecepientFullName = x.RecepientFullName == $"{x.FirstName} {x.LastName}" ? "Doesn't have recepient" : x.RecepientFullName
+            RecepientFullName = x.RecepientFullName == $"{x.FirstName} {x.LastName}" || x.RecepientFullName == null ? "Doesn't have recepient" : x.RecepientFullName
         }).ToListAsync();
 
         return listOfPairs;
@@ -155,13 +158,17 @@ public class UserService : IUserService
                 
                 if (userIds.Count == 1 && (user.Id == userIds[0] || getUserWithRandomIndex!.GiftRecepientId == user.Id))
                 {
-                    //može bez ova dva jer je već na ovo postavljen
                     user.GiftRecepientId = 0;
                     user.RecepientFullName = null;
                     break;
                 }
             }
 
+
+            if (user.Id == listOfUsers[^1].Id && getUserWithRandomIndex.GiftRecepientId == user.Id)
+            {
+                continue;
+            }
 
             if (userIds[0] != user.Id || getUserWithRandomIndex.GiftRecepientId != user.Id)
             {
