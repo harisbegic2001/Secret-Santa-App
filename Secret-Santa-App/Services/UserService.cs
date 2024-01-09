@@ -1,21 +1,25 @@
+namespace Secret_Santa_App.Services;
+
 using System.Security.Cryptography;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
-using Secret_Santa_App.Data;
-using Secret_Santa_App.DTOs.Reponses;
-using Secret_Santa_App.DTOs.Requests;
-using Secret_Santa_App.Exceptions;
-using Secret_Santa_App.Models;
-using Secret_Santa_App.Services.Interfaces;
-
-namespace Secret_Santa_App.Services;
-
+using Data;
+using DTOs.Reponses;
+using DTOs.Requests;
+using Exceptions;
+using Models;
+using Interfaces;
 public class UserService : IUserService
 {
     private readonly ITokenService _tokenService;
     private readonly DataContext _context;
 
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="UserService"/> class.
+    /// </summary>
+    /// <param name="tokenService"></param>
+    /// <param name="context"></param>
     public UserService(ITokenService tokenService, DataContext context)
     {
         _tokenService = tokenService;
@@ -25,7 +29,6 @@ public class UserService : IUserService
     /// <inheritdoc />
     public async Task<User> UserRegisterAsync(CreateUserDto createUserDto)
     {
-
         if (string.IsNullOrWhiteSpace(createUserDto.Email) || string.IsNullOrWhiteSpace(createUserDto.FirstName) || string.IsNullOrWhiteSpace(createUserDto.LastName))
         {
             throw new InvalidInputDataException();
@@ -39,15 +42,14 @@ public class UserService : IUserService
 
         var newUser = new User
         {
-
             FirstName = createUserDto.FirstName,
             LastName = createUserDto.LastName,
             Email = createUserDto.Email,
             UserRole = Role.User,
-          PasswordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(createUserDto.FirstName!.ToLower()+createUserDto.LastName!.ToLower())),
-          PasswordSalt = hmac.Key,
+            PasswordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(createUserDto.FirstName!.ToLower()+createUserDto.LastName!.ToLower())),
+            PasswordSalt = hmac.Key,
             GiftRecepientId = 0,
-            RecepientFullName = null
+            RecepientFullName = null,
         };
         await _context.Users!.AddAsync(newUser);
         await _context.SaveChangesAsync();
@@ -80,7 +82,7 @@ public class UserService : IUserService
         {
             Id = existingUser.Id,
             Email = existingUser.Email,
-            Token = _tokenService.CreateToken(existingUser)
+            Token = _tokenService.CreateToken(existingUser),
         };
     }
 
@@ -117,7 +119,6 @@ public class UserService : IUserService
             FullName = $"{existingUser.FirstName} {existingUser.LastName}",
             RecepientFullName = existingUser.RecepientFullName
         };
-
     }
 
     /// <inheritdoc />
@@ -127,36 +128,31 @@ public class UserService : IUserService
         var userIds = await _context.Users!.AsNoTracking().Select(x => x.Id).ToListAsync();
         var listOfUsers = await _context.Users!.ToListAsync();
 
-        
+
         if (userIds.Count < 3)
         {
             throw new InsufficientNumberOfUsersException("Number of users must be at least 3!");
         }
-        
-        
+
         foreach (var user in listOfUsers)
         {
             user.GiftRecepientId = 0;
             user.RecepientFullName = null;
-
         }
-        
+
         foreach (var user in listOfUsers)
         {
-
             var randomIndex = random.Next(userIds.Count);
             var randomId = userIds[randomIndex];
             var getUserWithRandomIndex =  _context.Users.Where(x => x.Id == randomId).FirstOrDefault();
 
-            
+
             while (randomId == user.Id || getUserWithRandomIndex?.GiftRecepientId == user.Id )
             {
                 randomIndex = random.Next(userIds.Count);
                 randomId = userIds[randomIndex];
                 getUserWithRandomIndex =  _context.Users.Where(x => x.Id == randomId).FirstOrDefault();
-                
 
-                
                 if (userIds.Count == 1 && (user.Id == userIds[0] || getUserWithRandomIndex!.GiftRecepientId == user.Id))
                 {
                     user.GiftRecepientId = 0;
@@ -166,26 +162,26 @@ public class UserService : IUserService
             }
 
 
-           /* if (user.Id == listOfUsers[^1].Id && getUserWithRandomIndex.GiftRecepientId == user.Id)
+            /* if (user.Id == listOfUsers[^1].Id && getUserWithRandomIndex.GiftRecepientId == user.Id)
+             {
+                 continue;
+             }
+
+             if (userIds[0] != user.Id || getUserWithRandomIndex.GiftRecepientId != user.Id)
+             {
+                 user.GiftRecepientId = randomId;
+                 user.RecepientFullName = $"{getUserWithRandomIndex?.FirstName} {getUserWithRandomIndex?.LastName}";
+             }*/
+
+            if ((user.Id == listOfUsers[^1].Id && getUserWithRandomIndex!.GiftRecepientId == user.Id) || (user.Id == listOfUsers[^1].Id && user.Id == userIds[0]))
             {
                 continue;
             }
 
-            if (userIds[0] != user.Id || getUserWithRandomIndex.GiftRecepientId != user.Id)
-            {
-                user.GiftRecepientId = randomId;
-                user.RecepientFullName = $"{getUserWithRandomIndex?.FirstName} {getUserWithRandomIndex?.LastName}";
-            }*/
-            
-           if ((user.Id == listOfUsers[^1].Id && getUserWithRandomIndex.GiftRecepientId == user.Id) || (user.Id == listOfUsers[^1].Id && user.Id == userIds[0]))
-           {
-               continue;
-           }
-           user.GiftRecepientId = randomId;
-           user.RecepientFullName = $"{getUserWithRandomIndex?.FirstName} {getUserWithRandomIndex?.LastName}";
-            
-            userIds.Remove(randomId);
+            user.GiftRecepientId = randomId;
+            user.RecepientFullName = $"{getUserWithRandomIndex?.FirstName} {getUserWithRandomIndex?.LastName}";
 
+            userIds.Remove(randomId);
         }
 
         await _context.SaveChangesAsync();

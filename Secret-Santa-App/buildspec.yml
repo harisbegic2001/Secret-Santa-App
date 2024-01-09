@@ -1,0 +1,17 @@
+﻿version: 0.2
+phases:
+  install:
+    runtime-versions:
+      dotnet: 6.0
+  pre_build:
+    commands:
+      - dotnet restore Secret-Santa-App/Secret-Santa-App.csproj
+  build:
+    commands:
+      - dotnet build Secret-Santa-App/Secret-Santa-App.csproj
+  post_build:
+    commands:
+      - dotnet publish -c Release -o ./app/ Secret-Santa-App/Secret-Santa-App.csproj
+artifacts:
+  files:
+    - '**/*'
