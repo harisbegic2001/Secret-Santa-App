@@ -74,7 +74,7 @@ if (app.Environment.IsDevelopment())
 //Custom exception Middleware (GLOBAL ERROR HANDLING)
 app.ConfigureExceptionMiddleware();
 app.UseHttpsRedirection();
-app.UseCors(x => x.AllowAnyHeader().AllowAnyMethod().WithOrigins("https://localhost:4200"));
+app.UseCors(x => x.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin());
 app.UseAuthentication(); 
 app.UseAuthorization();
 

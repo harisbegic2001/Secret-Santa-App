@@ -1,0 +1,11 @@
+{
+  "Version": 1,
+  "ProjectMap": {
+    "931e182b-4b3f-4cbb-9c4b-27636391a5fa": {
+      "ProjectGuid": "931e182b-4b3f-4cbb-9c4b-27636391a5fa",
+      "DisplayName": "Secret-Santa-App",
+      "ColorIndex": 0
+    }
+  },
+  "NextColorIndex": 1
+}

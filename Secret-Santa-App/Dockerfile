@@ -1,6 +1,6 @@
 FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build-env
 WORKDIR /App
-
+ENV ASPNETCORE_ENVIRONMENT=Development
 # Copy everything
 COPY . ./
 # Restore as distinct layers
@@ -13,5 +13,4 @@ FROM mcr.microsoft.com/dotnet/aspnet:6.0
 WORKDIR /App
 COPY --from=build-env /App/out .
 
-EXPOSE 12064
-ENTRYPOINT ["dotnet", "Secret-Santa-App.dll"]
+ENTRYPOINT ["dotnet", "Secret-Santa-App.dll",  "--environment=Development"]
